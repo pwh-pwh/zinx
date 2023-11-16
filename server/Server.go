@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"zinx/ziface"
-	"zinx/znet"
+	"github.com/pwh-pwh/zinx/ziface"
+	"github.com/pwh-pwh/zinx/znet"
 )
 
 // ping test 自定义路由

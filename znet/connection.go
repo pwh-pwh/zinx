@@ -2,8 +2,8 @@ package znet
 
 import (
 	"fmt"
+	"github.com/pwh-pwh/zinx/ziface"
 	"net"
-	"zinx/ziface"
 )
 
 type Connection struct {

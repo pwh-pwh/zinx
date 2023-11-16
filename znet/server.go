@@ -2,9 +2,9 @@ package znet
 
 import (
 	"fmt"
+	"github.com/pwh-pwh/zinx/ziface"
 	"net"
 	"time"
-	"zinx/ziface"
 )
 
 type Server struct {
