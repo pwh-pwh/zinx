@@ -2,6 +2,7 @@ package znet
 
 import (
 	"fmt"
+	"github.com/pwh-pwh/zinx/utils"
 	"github.com/pwh-pwh/zinx/ziface"
 	"net"
 	"time"
@@ -21,7 +22,11 @@ func (s *Server) AddRouter(router ziface.IRouter) {
 }
 
 func (s *Server) Start() {
-	fmt.Printf("[START] Server listenner at IP: %s, Port %d, is starting\n", s.IP, s.Port)
+	fmt.Printf("[START] Server name: %s,listenner at IP: %s, Port %d is starting\n", s.Name, s.IP, s.Port)
+	fmt.Printf("[Zinx] Version: %s, MaxConn: %d,  MaxPacketSize: %d\n",
+		utils.GlobalObject.Version,
+		utils.GlobalObject.MaxConn,
+		utils.GlobalObject.MaxPacketSize)
 
 	//开启一个go去做服务端Linster业务
 	go func() {
@@ -78,12 +83,13 @@ func (s *Server) Serve() {
 	}
 }
 
-func NewServer(name string) ziface.IServer {
+func NewServer() ziface.IServer {
+	utils.GlobalObject.Reload()
 	s := &Server{
-		Name:      name,
+		Name:      utils.GlobalObject.Name,
 		IPVersion: "tcp4",
-		IP:        "0.0.0.0",
-		Port:      7777,
+		IP:        utils.GlobalObject.Host,
+		Port:      utils.GlobalObject.TcpPort,
 		Router:    nil,
 	}
 	return s
