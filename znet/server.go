@@ -9,11 +9,40 @@ import (
 )
 
 type Server struct {
-	Name       string
-	IPVersion  string
-	IP         string
-	Port       int
-	msgHandler ziface.IMsgHandle
+	Name        string
+	IPVersion   string
+	IP          string
+	Port        int
+	msgHandler  ziface.IMsgHandle
+	ConnMgr     ziface.IConnManager
+	OnConnStart func(conn ziface.IConnection)
+	OnConnStop  func(conn ziface.IConnection)
+}
+
+func (s *Server) SetOnConnStart(f func(connection ziface.IConnection)) {
+	s.OnConnStart = f
+}
+
+func (s *Server) SetOnConnStop(f func(connection ziface.IConnection)) {
+	s.OnConnStop = f
+}
+
+func (s *Server) CallOnConnStart(connection ziface.IConnection) {
+	if s.OnConnStart != nil {
+		fmt.Println("-----> CallOnConnStart....")
+		s.OnConnStart(connection)
+	}
+}
+
+func (s *Server) CallOnConnStop(connection ziface.IConnection) {
+	if s.OnConnStop != nil {
+		fmt.Println("-----> CallOnConnStop....")
+		s.OnConnStop(connection)
+	}
+}
+
+func (s *Server) GetConnMgr() ziface.IConnManager {
+	return s.ConnMgr
 }
 
 func (s *Server) AddRouter(msgId uint32, router ziface.IRouter) {
@@ -61,10 +90,15 @@ func (s *Server) Start() {
 				continue
 			}
 
+			if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
+				conn.Close()
+				continue
+			}
+
 			//3.2 TODO Server.Start() 设置服务器最大连接控制,如果超过最大连接，那么则关闭此新的连接
 
 			//3.3 处理该新连接请求的 业务 方法， 此时应该有 handler 和 conn是绑定的
-			dealConn := NewConnection(conn, cid, s.msgHandler)
+			dealConn := NewConnection(s, conn, cid, s.msgHandler)
 			cid++
 
 			//3.4 启动当前链接的处理业务
@@ -75,6 +109,7 @@ func (s *Server) Start() {
 
 func (s *Server) Stop() {
 	fmt.Println("[STOP] Zinx server , name ", s.Name)
+	s.ConnMgr.ClearConn()
 }
 
 func (s *Server) Serve() {
@@ -92,6 +127,7 @@ func NewServer() ziface.IServer {
 		IP:         utils.GlobalObject.Host,
 		Port:       utils.GlobalObject.TcpPort,
 		msgHandler: NewMsgHandle(),
+		ConnMgr:    NewConnManager(),
 	}
 	return s
 }
