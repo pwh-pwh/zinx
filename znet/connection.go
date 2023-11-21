@@ -3,6 +3,7 @@ package znet
 import (
 	"errors"
 	"fmt"
+	"github.com/pwh-pwh/zinx/utils"
 	"github.com/pwh-pwh/zinx/ziface"
 	"io"
 	"net"
@@ -62,7 +63,11 @@ func (c *Connection) StartReader() {
 			conn: c,
 			msg:  msg,
 		}
-		go c.MsgHandler.DoMsgHandler(&req)
+		if utils.GlobalObject.WorkerPoolSize > 0 {
+			c.MsgHandler.SendMsgToTaskQueue(&req)
+		} else {
+			go c.MsgHandler.DoMsgHandler(&req)
+		}
 	}
 }
 
