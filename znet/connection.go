@@ -7,6 +7,7 @@ import (
 	"github.com/pwh-pwh/zinx/ziface"
 	"io"
 	"net"
+	"sync"
 )
 
 type Connection struct {
@@ -18,6 +19,30 @@ type Connection struct {
 	ExitBuffChan chan bool
 	msgChan      chan []byte
 	msgBuffChan  chan []byte
+	property     map[string]any
+	propertyLock sync.RWMutex
+}
+
+func (c *Connection) SetProperty(key string, value any) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+	c.property[key] = value
+}
+
+func (c *Connection) GetProperty(key string) (any, error) {
+	c.propertyLock.RLock()
+	defer c.propertyLock.RUnlock()
+	if value, ok := c.property[key]; ok {
+		return value, nil
+	} else {
+		return nil, errors.New("no found property")
+	}
+}
+
+func (c *Connection) RemoveProperty(key string) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+	delete(c.property, key)
 }
 
 func (c *Connection) SendBuffMsg(msgId uint32, data []byte) error {
@@ -44,6 +69,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 		MsgHandler:   msgHandler,
 		msgChan:      make(chan []byte),
 		msgBuffChan:  make(chan []byte, utils.GlobalObject.MaxMsgChanLen),
+		property:     make(map[string]any),
 	}
 	c.TcpServer.GetConnMgr().Add(c)
 	return c
